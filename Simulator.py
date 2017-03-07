@@ -72,7 +72,7 @@ def update_robot_position(robot, speed, direction):
 	robot.y_pos -= int(speed * np.sin(robot.orientation + direction * np.pi / 2.0))
 	robot.orientation = robot.orientation % (2.0 * np.pi)
 	if robot.orientation < 0:
-		robot.orientation = 2.0 * pi + robot.orientation
+		robot.orientation = 2.0 * np.pi + robot.orientation
 def load_entities():
 	robot = Entity("robot", 900, 1800, 0, np.pi / 2.3, 0, 10)
 	entities.append(robot)
