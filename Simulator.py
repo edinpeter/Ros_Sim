@@ -11,7 +11,7 @@ curses_mode = True
 entities = []
 FRAME_RATE = 20
 ROBOT_SPEED = 2 #no units
-ROBOT_ROTATE_SPEED = 0.03
+ROBOT_ROTATE_SPEED = 0.01
 FOV = 50
 class Entity():
 	def __init__(self, name, x_pos, y_pos, spherical, orientation, floor_object, width):
@@ -38,10 +38,16 @@ def Simulator():
 	#Viewport = 
 	print "Past map creation"
 	while 1:
-		#time.sleep(1.0 / FRAME_RATE)
-		map.handleRobotRotation()
-		map.DrawMap()
+		#time.sleep(0.1)
+		start = time.time()
+		map.handle_robot_rotation()
+		map.draw_map()
+		print "Draw map:"
+		print (time.time() - start)
+		print "Draw Viewport:"
 		debug_viewer.update_view_window()
+		print (time.time() - start)
+
 		if curses_mode:
 			char = screen.getch()
 			if char == ord('q'):
@@ -58,9 +64,7 @@ def Simulator():
 				update_robot_position(entities[0], ROBOT_SPEED, 0)
 			elif char == curses.KEY_DOWN:
 				update_robot_position(entities[0], -1 * ROBOT_SPEED, 0)
-		print "Position Updated."
-		print robot.orientation
-		print robot.orientation % 2.0 * np.pi
+
 
 def update_robot_position(robot, speed, direction):
 	#direction = 1 for side to side and 0 for forward/backward

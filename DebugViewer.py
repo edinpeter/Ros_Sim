@@ -21,7 +21,7 @@ class DebugViewer:
 		cv2.namedWindow('viewport', cv2.WINDOW_NORMAL)
 
 	def update_view_window(self):
-		objects_in_view = self.GetObjectsToDraw(self.entities_ref)
+		objects_in_view = self.get_objects_to_draw(self.entities_ref)
 		self.draw_viewport(objects_in_view)
 
 	def draw_info(self, viewport):
@@ -48,60 +48,60 @@ class DebugViewer:
 
 			if obj_draw_proportion < 2:
 
-				self.drawEntity(blank_viewport, obj, obj_draw_x_pos, obj_draw_y_pos, obj_draw_proportion)
+				self.draw_entity(blank_viewport, obj, obj_draw_x_pos, obj_draw_y_pos, obj_draw_proportion)
 		cropped_viewport = np.zeros((CROPPED_WINDOW_SIZE,CROPPED_WINDOW_SIZE,4), np.uint8)
 		cropped_viewport[:] = (255,255,255, 0)
 		cropped_viewport[0:CROPPED_WINDOW_SIZE, 0: CROPPED_WINDOW_SIZE] = blank_viewport[(WINDOW_SIZE - CROPPED_WINDOW_SIZE) / 2 : WINDOW_SIZE - ((WINDOW_SIZE - CROPPED_WINDOW_SIZE) / 2), (WINDOW_SIZE - CROPPED_WINDOW_SIZE) / 2 : WINDOW_SIZE - ((WINDOW_SIZE - CROPPED_WINDOW_SIZE) / 2)]
 		cv2.imshow('viewport',cropped_viewport)
 		cv2.waitKey(1)#millisec
 
-	def drawEntity(self, image, obj, obj_draw_x_pos, obj_draw_y_pos, obj_draw_proportion):
+	def draw_entity(self, image, obj, obj_draw_x_pos, obj_draw_y_pos, obj_draw_proportion):
 		img_width = image.shape[1]
 
 		objDrawSizeX = img_width * obj_draw_proportion
 
-		objResized = cv2.resize(self.world_item_dictionary[obj.name], None, fx=obj_draw_proportion, fy=obj_draw_proportion, interpolation = cv2.INTER_LINEAR)
-		obj_x_start_loc, obj_x_end_loc, obj_image_x_start_loc, obj_image_x_end_loc, obj_y_dim = self.fixDrawBounds(image, obj_draw_x_pos, objResized)
+		obj_resized = cv2.resize(self.world_item_dictionary[obj.name], None, fx=obj_draw_proportion, fy=obj_draw_proportion, interpolation = cv2.INTER_LINEAR)
+		obj_x_start_loc, obj_x_end_loc, obj_image_x_start_loc, obj_image_x_end_loc, obj_y_dim = self.fix_draw_bounds(image, obj_draw_x_pos, obj_resized)
 
-		lowerY = WINDOW_SIZE / 2 - obj_y_dim / 2.0
-		upperY = WINDOW_SIZE / 2 + obj_y_dim / 2.0
+		lower_y = WINDOW_SIZE / 2 - obj_y_dim / 2.0
+		upper_y = WINDOW_SIZE / 2 + obj_y_dim / 2.0
 
-		ObjImgYs = 0
+		obj_img_ys = 0
 
-		upperY,lowerY, ObjImgYs, obj_y_dim, obj_x_end_loc, obj_x_start_loc, obj_image_x_start_loc, obj_image_x_end_loc = self.fix_bounds(upperY, lowerY, ObjImgYs, obj_y_dim, obj_x_end_loc, obj_x_start_loc, obj_image_x_start_loc, obj_image_x_end_loc)
+		upper_y,lower_y, obj_img_ys, obj_y_dim, obj_x_end_loc, obj_x_start_loc, obj_image_x_start_loc, obj_image_x_end_loc = self.fix_bounds(upper_y, lower_y, obj_img_ys, obj_y_dim, obj_x_end_loc, obj_x_start_loc, obj_image_x_start_loc, obj_image_x_end_loc)
 		try:
-			image[lowerY : upperY, obj_x_start_loc: obj_x_end_loc] = objResized[ObjImgYs : obj_y_dim, obj_image_x_start_loc: obj_image_x_end_loc]
+			image[lower_y : upper_y, obj_x_start_loc: obj_x_end_loc] = obj_resized[obj_img_ys : obj_y_dim, obj_image_x_start_loc: obj_image_x_end_loc]
 		except:
 			pass
 		
-	def fix_bounds(self, upperY, lowerY, mapYs, mapYe, upperX, lowerX, mapXs, mapXe):
+	def fix_bounds(self, upper_y, lower_y, map_y_start, map_y_end, upper_x, lower_x, map_x_start, map_x_end):
 		while True:
-			if upperY - lowerY > mapYe - mapYs:
-				if lowerY is WINDOW_SIZE:
-					upperY -=1
+			if upper_y - lower_y > map_y_end - map_y_start:
+				if lower_y is WINDOW_SIZE:
+					upper_y -=1
 				else:
-					lowerY += 1
-			elif upperY - lowerY < mapYe - mapYs:
-				if lowerY is 0:
-					upperY += 1
+					lower_y += 1
+			elif upper_y - lower_y < map_y_end - map_y_start:
+				if lower_y is 0:
+					upper_y += 1
 				else:
-					lowerY -= 1
+					lower_y -= 1
 
-			elif upperX - lowerX > mapXe - mapXs:
-				if lowerX is WINDOW_SIZE:
-					upperX -= 1
+			elif upper_x - lower_x > map_x_end - map_x_start:
+				if lower_x is WINDOW_SIZE:
+					upper_x -= 1
 				else:
-					lowerX += 1
+					lower_x += 1
 
-			elif upperX - lowerX < mapXe - mapXs:
-				if lowerX is 0:
-					upperX += 1
+			elif upper_x - lower_x < map_x_end - map_x_start:
+				if lower_x is 0:
+					upper_x += 1
 				else:
-					lowerX -= 1
+					lower_x -= 1
 			else:
-				return upperY,lowerY,mapYs,mapYe,upperX,lowerX,mapXs,mapXe
+				return upper_y, lower_y, map_y_start, map_y_end, upper_x, lower_x, map_x_start, map_x_end
 
-	def fixDrawBounds(self, canvas, obj_draw_x_pos, objResized):
+	def fix_draw_bounds(self, canvas, obj_draw_x_pos, objResized):
 		obj_x_dim= objResized.shape[1]
 		canvas_width = int(canvas.shape[1])
 
@@ -134,13 +134,13 @@ class DebugViewer:
 		return entAngle - robot.orientation
 		
 
-	def GetObjectsToDraw(self, entities):
-		drawingList = []
+	def get_objects_to_draw(self, entities):
+		drawing_list = []
 		for ent in entities[1:]:
 			if(self.distance(self.robot, ent) < VIEW_RANGE and np.absolute(self.find_angle_from_bot_to_obj(self.robot, ent)) < self.fov_rad / 2.0):
 				if ent.floor_object is 0:
-					drawingList.append(ent)
-		return drawingList
+					drawing_list.append(ent)
+		return drawing_list
 
 	def distance(self, ent1, ent2):
 		return np.sqrt(np.square(ent1.x_pos - ent2.x_pos) + np.square(ent1.y_pos - ent2.y_pos))

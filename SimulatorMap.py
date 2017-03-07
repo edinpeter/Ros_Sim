@@ -13,39 +13,39 @@ Y_ADJUST_RATIO = 9.0 / 12.0
 class SimulatorMap:
 	robot = None
 	entities_ref = None
-	mapIconDictionary = {}
+	map_icon_dictionary = {}
 	robot_default_image = None
 	fov = None
-	entityImageAdjustX = None
-	entityImageAdjustY = None
+	entity_image_map_offset_x = None
+	entity_image_map_offset_y = None
 
 	def __init__(self,entities, fov):
 		self.entities_ref = entities
 		self.robot = self.entities_ref[0]
 		self.fov = fov / 2.0 * np.pi / 180.0
 		self.create_map_icon_dictionary()
-		self.DrawMap()
+		self.draw_map()
 		cv2.namedWindow('map', cv2.WINDOW_NORMAL)
 
-	def DrawInfo(self, simmap, rx_pos, ry_pos, x_pos, y_pos, ent):
+	def draw_info(self, simmap, rx_pos, ry_pos, x_pos, y_pos, ent):
 		cv2.line(simmap, (int(rx_pos), int(ry_pos)), (int(x_pos), int(y_pos)), (255,0,0))
 		#cv2.putText(simmap, str(self.findAngleFromBotToObj(self.robot, ent)), (int(x_pos),int(y_pos)), 1, 1, (255,0,0))
 		cv2.putText(simmap, str(self.distance(self.robot, ent)), (int(x_pos), int(y_pos)), 1, 1, (0, 255, 0))
 
 
-	def DrawMap(self):
+	def draw_map(self):
 		blank_map = np.zeros((WINDOW_SIZE,WINDOW_SIZE,4), np.uint8)
 		blank_map[:] = (255,255,255, 0)
-		entitityImageAdjustX = self.robot.x_pos - WINDOW_SIZE / 2
-		entitityImageAdjustY = self.robot.y_pos - Y_ADJUST_RATIO * WINDOW_SIZE
-		self.entitityImageAdjustX = entitityImageAdjustX
-		self.entitityImageAdjustY = entitityImageAdjustY
-		#print entitityImageAdjustY
+		entity_map_image_offset_x = self.robot.x_pos - WINDOW_SIZE / 2
+		entity_map_image_adjust_y = self.robot.y_pos - Y_ADJUST_RATIO * WINDOW_SIZE
+		self.entitityImageAdjustX = entity_map_image_offset_x
+		self.entitityImageAdjustY = entity_map_image_adjust_y
+		#print entity_map_image_adjust_y
 		for ent in self.entities_ref:
-			self.DrawEntity(blank_map, ent, ent.x_pos - entitityImageAdjustX, ent.y_pos - entitityImageAdjustY)
-			self.DrawInfo(blank_map, self.robot.x_pos - entitityImageAdjustX, self.robot.y_pos - entitityImageAdjustY, ent.x_pos - entitityImageAdjustX, ent.y_pos - entitityImageAdjustY, ent)
-		self.DrawEntity(blank_map, self.robot, self.robot.x_pos - entitityImageAdjustX, self.robot.y_pos - entitityImageAdjustY)
-		self.DrawFov(blank_map)
+			self.draw_entity(blank_map, ent, ent.x_pos - entity_map_image_offset_x, ent.y_pos - entity_map_image_adjust_y)
+			self.draw_info(blank_map, self.robot.x_pos - entity_map_image_offset_x, self.robot.y_pos - entity_map_image_adjust_y, ent.x_pos - entity_map_image_offset_x, ent.y_pos - entity_map_image_adjust_y, ent)
+		self.draw_entity(blank_map, self.robot, self.robot.x_pos - entity_map_image_offset_x, self.robot.y_pos - entity_map_image_adjust_y)
+		self.draw_fov(blank_map)
 		cv2.imshow('map',blank_map)
 		cv2.waitKey(1)#millisec
 
@@ -78,8 +78,8 @@ class SimulatorMap:
 		#return cv2.bitwise_and(icon, icon, mask = thresh)
 		return icon
 
-	def DrawEntity(self,blank_map, ent, x_pos, y_pos):
-		mapIcon = self.mapIconDictionary[ent.name]
+	def draw_entity(self,blank_map, ent, x_pos, y_pos):
+		mapIcon = self.map_icon_dictionary[ent.name]
 		draw = 1
 		mapXs = 0
 		mapYs = 0
@@ -123,53 +123,53 @@ class SimulatorMap:
 				return upperY,lowerY,mapYs,mapYe,upperX,lowerX,mapXs,mapXe
 
 
-	def handleRotations(self):
-		for key in self.mapIconDictionary:
+	def handle_rotations(self):
+		for key in self.map_icon_dictionary:
 			for ent in self.entities_ref:
 				if ent.name is key:
 					if ent.orientation is not 0:
-						imgWidth = self.mapIconDictionary[ent.name].shape[1]
-						imgHeight = self.mapIconDictionary[ent.name].shape[0]
+						imgWidth = self.map_icon_dictionary[ent.name].shape[1]
+						imgHeight = self.map_icon_dictionary[ent.name].shape[0]
 						diag = np.sqrt(imgWidth * imgWidth + imgHeight * imgHeight)
 						diag = int(diag)
 						empty_image = np.zeros((diag,diag,4), np.uint8)
 						empty_image[:] = (255,255,255, 0)
-						empty_image[diag / 2.0 - imgHeight / 2.0 : diag / 2.0 + imgHeight / 2.0, diag / 2.0 - imgWidth / 2.0 : diag / 2.0 + imgWidth / 2.0] = self.mapIconDictionary[ent.name]
+						empty_image[diag / 2.0 - imgHeight / 2.0 : diag / 2.0 + imgHeight / 2.0, diag / 2.0 - imgWidth / 2.0 : diag / 2.0 + imgWidth / 2.0] = self.map_icon_dictionary[ent.name]
 
 						M = cv2.getRotationMatrix2D( (diag/2,diag/2), int(ent.orientation * 180.0 / np.pi) ,1)
 						dst = cv2.warpAffine(empty_image,M,(diag,diag), 0, 0, 1, (255,255,255, 0))
-						self.mapIconDictionary[ent.name] = self.cleanIcon(dst)
+						self.map_icon_dictionary[ent.name] = self.cleanIcon(dst)
 
-	def handleRobotRotation(self):
-		imgWidth = self.robot_default_image.shape[1]
-		imgHeight = self.robot_default_image.shape[0]
-		diag = np.sqrt(imgWidth * imgWidth + imgHeight * imgHeight)
+	def handle_robot_rotation(self):
+		map_image_width = self.robot_default_image.shape[1]
+		map_image_height = self.robot_default_image.shape[0]
+		diag = np.sqrt(map_image_width * map_image_width + map_image_height * map_image_height)
 		diag = int(diag)
 		empty_image = np.zeros((diag,diag,4), np.uint8)
 		empty_image[:] = (255,255,255, 0)
-		empty_image[diag / 2.0 - imgHeight / 2.0 : diag / 2.0 + imgHeight / 2.0, diag / 2.0 - imgWidth / 2.0 : diag / 2.0 + imgWidth / 2.0] = self.robot_default_image
+		empty_image[diag / 2.0 - map_image_height / 2.0 : diag / 2.0 + map_image_height / 2.0, diag / 2.0 - map_image_width / 2.0 : diag / 2.0 + map_image_width / 2.0] = self.robot_default_image
 		ent = self.entities_ref[0]
-		rotationMatrix = cv2.getRotationMatrix2D( (diag/2,diag/2), int(ent.orientation * 180.0 / np.pi) ,1)
+		rotation_matrix = cv2.getRotationMatrix2D( (diag/2,diag/2), int(ent.orientation * 180.0 / np.pi) ,1)
 
-		rotated_robot = cv2.warpAffine(empty_image, rotationMatrix, (diag,diag), 0, 0, 1, (255,255,255, 127))
-		self.mapIconDictionary[self.entities_ref[0].name] = self.cleanIcon(rotated_robot)
+		rotated_robot = cv2.warpAffine(empty_image, rotation_matrix, (diag,diag), 0, 0, 1, (255,255,255, 127))
+		self.map_icon_dictionary[self.entities_ref[0].name] = self.cleanIcon(rotated_robot)
 	
-	def DrawFov(self, simmap):
-		xSource = WINDOW_SIZE / 2
-		ySource = Y_ADJUST_RATIO * WINDOW_SIZE
-		origin = int(xSource), int(ySource)
+	def draw_fov(self, simmap):
+		x_fov_origin = WINDOW_SIZE / 2
+		y_fov_origin = Y_ADJUST_RATIO * WINDOW_SIZE
+		origin = int(x_fov_origin), int(y_fov_origin)
 		length = 500
-		#Plus pi/2 because the image itself is rotated pi/2 prior to being loaded
-		leftEdgeH = int(length * np.sin(self.entities_ref[0].orientation + self.fov))
-		leftEdgeW = int(length * np.cos(self.entities_ref[0].orientation + self.fov))
-		leftEdgePt = leftEdgeW + origin[0], origin[1] - leftEdgeH
 
-		rightEdgeH = int(length * np.sin(self.entities_ref[0].orientation - self.fov))
-		rightEdgeW = int(length * np.cos(self.entities_ref[0].orientation - self.fov))
-		rightEdgePt = rightEdgeW + origin[0], origin[1] - rightEdgeH
+		left_edge_h = int(length * np.sin(self.entities_ref[0].orientation + self.fov))
+		left_edge_w = int(length * np.cos(self.entities_ref[0].orientation + self.fov))
+		left_edge_pt = left_edge_w + origin[0], origin[1] - left_edge_h
 
-		cv2.line(simmap, origin, leftEdgePt, (255,0,0))
-		cv2.line(simmap, origin, rightEdgePt, (255,0,0))
+		right_edge_h = int(length * np.sin(self.entities_ref[0].orientation - self.fov))
+		right_edge_w = int(length * np.cos(self.entities_ref[0].orientation - self.fov))
+		right_edge_pt = right_edge_w + origin[0], origin[1] - right_edge_h
+
+		cv2.line(simmap, origin, left_edge_pt, (255,0,0))
+		cv2.line(simmap, origin, right_edge_pt, (255,0,0))
 
 	def find_angle_from_bot_to_obj(self, robot, ent):
 		dX = ent.x_pos - robot.x_pos
@@ -191,11 +191,11 @@ class SimulatorMap:
 		ofm_map = cv2.imread("mapicons/ofm_map.png", -1)
 		self.robot_default_image = robot_map
 
-		self.mapIconDictionary['redb'] = redb_map
-		self.mapIconDictionary['greenb'] = greenb_map
-		self.mapIconDictionary['yellowb'] = yellowb_map
-		self.mapIconDictionary['gate'] = gate_map
-		self.mapIconDictionary['robot'] = self.cleanIcon(robot_map)
-		self.mapIconDictionary['ofm'] = ofm_map
-		self.handleRotations()
+		self.map_icon_dictionary['redb'] = redb_map
+		self.map_icon_dictionary['greenb'] = greenb_map
+		self.map_icon_dictionary['yellowb'] = yellowb_map
+		self.map_icon_dictionary['gate'] = gate_map
+		self.map_icon_dictionary['robot'] = self.cleanIcon(robot_map)
+		self.map_icon_dictionary['ofm'] = ofm_map
+		self.handle_rotations()
 
