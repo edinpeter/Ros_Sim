@@ -6,6 +6,9 @@ import math
 VIEW_RANGE = 500
 WINDOW_SIZE = 1100
 CROPPED_WINDOW_SIZE = 800
+blank_viewport = np.zeros((WINDOW_SIZE, WINDOW_SIZE, 4), np.uint8)
+
+
 class DebugViewer:
 	#field of view in degrees
 	fov = None
@@ -29,7 +32,6 @@ class DebugViewer:
 		cv2.circle(viewport, (WINDOW_SIZE / 2, WINDOW_SIZE), 6, (255,0,255),-1)
 
 	def draw_viewport(self, objects):
-		blank_viewport = np.zeros((WINDOW_SIZE,WINDOW_SIZE,4), np.uint8)
 		blank_viewport[:] = (255,255,255, 0)
 		
 		objects.sort(self.distance_sort)
